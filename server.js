@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import infoRoutes from './api/routes/info.routes.js';
+// import infoRoutes from './api/routes/info.routes.js';
+import authRoutes from './api/routes/auth/login.routes.js';
 
 // Resolve directory paths in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +21,8 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.use('/api/info', infoRoutes);
+// app.use('/api/info', infoRoutes);
+app.use('/api/auth', authRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
