@@ -1,52 +1,47 @@
-# Monorepo React + Express Starter
+# My Waschen
 
-Proyek ini adalah **starter template** untuk aplikasi full-stack dengan **React (Vite)** di frontend dan **Express.js** di backend, dijalankan bersamaan dengan `concurrently`.
+Portal pelanggan Waschen Laundry. React (Vite) + Express, dijalankan bersamaan dengan `concurrently`.
+
+Fitur utama: lacak progres cucian via nomor nota / scan barcode (tanpa login), login akun portal, dan instalasi PWA.
 
 ## Struktur
 
 ```
-├── api/              # Backend Express (routes, controllers, models)
-├── src/              # Frontend React (components, pages, hooks)
-├── public/           # Static assets
-├── server.js         # Entry point Express
-├── vite.config.js    # Konfigurasi Vite
-└── package.json      # Dependencies & scripts
+api/              Backend Express (routes, controllers, db)
+src/              Frontend React (pages, components, utils)
+public/           Static assets & ikon PWA
+server.js         Entry point Express
+vite.config.js    Konfigurasi Vite + PWA
 ```
 
-## Cara Pakai
+## Menjalankan
 
 ```bash
-# Clone repository
-git clone <repo-url>
-cd <project-folder>
-
-# Install dependencies
 npm install
-
-# Jalankan development (server + client concurrently)
 npm run dev
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:5000`
+- Frontend: `http://localhost:8000`
+- Backend: `http://localhost:8001` (di-proxy lewat `/api`)
+
+Butuh file `.env` berisi kredensial database. Lihat `api/db/pool.js` untuk variabel yang dipakai.
 
 ## Scripts
 
-| Script          | Deskripsi                              |
-| --------------- | -------------------------------------- |
-| `npm run dev`   | Jalankan server & client bersamaan     |
-| `npm run dev:server` | Backend saja (nodemon)           |
-| `npm run dev:client` | Frontend saja (Vite)             |
-| `npm run build` | Build frontend untuk production        |
-| `npm start`     | Jalankan server production             |
-| `npm run preview` | Preview build Vite                  |
+| Script               | Deskripsi                          |
+| -------------------- | ---------------------------------- |
+| `npm run dev`        | Server & client bersamaan          |
+| `npm run dev:server` | Backend saja (nodemon)             |
+| `npm run dev:client` | Frontend saja (Vite)               |
+| `npm run build`      | Build frontend untuk production    |
+| `npm start`          | Jalankan server production         |
+| `npm run preview`    | Preview hasil build                |
 
-## Ganti Nama Project
+## API Tracking
 
-Ubah field `"name"` di `package.json` sesuai nama project Anda:
+| Endpoint                      | Keterangan                                     |
+| ----------------------------- | ---------------------------------------------- |
+| `GET /api/tracking/work-statuses` | Daftar tahapan pengerjaan                  |
+| `GET /api/tracking/:orderNo`      | Detail progres order (read-only, publik)   |
 
-```json
-{
-  "name": "nama-project-anda"
-}
-```
+Endpoint tracking bersifat publik dan hanya mengembalikan field yang aman — data sensitif pelanggan tidak diekspos.

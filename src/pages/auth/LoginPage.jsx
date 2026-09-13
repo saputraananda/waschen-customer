@@ -8,13 +8,12 @@ import {
     AlertCircle,
     Eye,
     EyeOff,
-    Sparkles,
-    Layers,
     X,
     Phone,
     Search
 } from 'lucide-react';
 import Toast from '../../components/Toast.jsx';
+import InstallPwaButton from '../../components/InstallPwaButton.jsx';
 
 // Import local images from assets/images
 import img1 from '../../assets/images/1.png';
@@ -87,7 +86,7 @@ export default function LoginPage() {
 
     // Set document title & Carousel timer
     useEffect(() => {
-        document.title = 'Login | Waschen Laundry';
+        document.title = 'Login | My Waschen';
         const id = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
         }, 4500);
@@ -183,16 +182,16 @@ export default function LoginPage() {
                             alt="Mascot Sad"
                             className="h-36 w-auto object-contain mb-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.2)] select-none"
                         />
-                        <h3 className="text-base font-bold text-[#5f1340] mb-2 font-sans">Oops, Login Failed!</h3>
+                        <h3 className="text-base font-bold text-[#5f1340] mb-2 font-sans">Login Gagal</h3>
                         <p className="text-sm text-slate-650 mb-5 leading-relaxed font-semibold font-sans">
-                            Your username or password is incorrect...
+                            Username atau password Anda tidak sesuai.
                         </p>
                         <button
                             type="button"
                             onClick={() => setIsErrorModalOpen(false)}
-                            className="w-full py-2.5 bg-[#5f1340] hover:bg-[#4a0d31] text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                            className="w-full py-3 sm:py-2.5 bg-[#5f1340] hover:bg-[#4a0d31] text-white font-semibold rounded-lg shadow-md transition-colors duration-200 cursor-pointer"
                         >
-                            Try Again
+                            Coba Lagi
                         </button>
                     </div>
                 </div>
@@ -208,13 +207,12 @@ export default function LoginPage() {
                             className="h-36 w-auto object-contain mb-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.2)] select-none animate-bounce-short"
                         />
 
-                        <h3 className="text-base font-bold text-emerald-650 mb-2 font-sans flex items-center gap-1.5 justify-center">
-                            Login Successful!
-                            <Sparkles className="h-4.5 w-4.5 text-yellow-500 animate-pulse" />
+                        <h3 className="text-base font-bold text-emerald-650 mb-2 font-sans">
+                            Login Berhasil!
                         </h3>
 
                         <div className="text-sm text-slate-600 mb-5 font-sans text-center px-4 w-full">
-                            <span className="text-slate-500 block text-xs">Welcome back,</span>
+                            <span className="text-slate-500 block text-xs">Selamat datang kembali,</span>
                             <span className="font-extrabold text-base text-[#5f1340] mt-1 block break-words leading-snug">
                                 {toTitleCase(welcomeName)}!
                             </span>
@@ -222,7 +220,7 @@ export default function LoginPage() {
 
                         <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold justify-center">
                             <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span>Opening portal...</span>
+                            <span>Membuka portal...</span>
                         </div>
                     </div>
                 </div>
@@ -292,43 +290,55 @@ export default function LoginPage() {
             </div>
 
             {/* RIGHT PANEL: Form Login (Mobile & Desktop, 45% Visual Weight) */}
-            <div className="w-full lg:w-[45%] flex flex-col justify-center px-6 sm:px-16 lg:px-14 xl:px-20 py-12 relative bg-[#f8f8f8]">
-                {/* Centered Brand Header above the form (visible on both mobile and desktop) */}
-                {/* <div className="flex justify-center mb-8 w-full max-w-md mx-auto">
-                    <img src={waschenLogo} alt="Waschen Laundry Logo" className="h-20 w-auto object-contain" />
-                </div> */}
+            <div className="w-full lg:w-[45%] flex flex-col lg:justify-center lg:px-14 xl:px-20 lg:py-12 relative bg-[#f8f8f8] overflow-y-auto">
 
-                {/* Form Header (Aligned with input width) */}
-                <div className="mb-6 w-full max-w-md mx-auto text-left">
-                    <h2 className="text-xl font-bold text-[#313030] tracking-tight flex items-center gap-2">
-                        Welcome
-                        <Sparkles className="h-4 w-4 text-[#5f1340] animate-pulse" />
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1">
-                        Log in with your portal account to start daily work coordination.
-                    </p>
+                {/* Hero brand — mobile only, desktop sudah punya panel kiri */}
+                <div className="lg:hidden relative h-56 shrink-0 overflow-hidden bg-[#3d0728]">
+                    <img src={img1} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-45" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#3d0728]/70 via-[#5f1340]/75 to-[#f8f8f8]" />
+                    <div className="relative h-full flex flex-col justify-center px-6 pt-[env(safe-area-inset-top)] pb-10">
+                        <img src={waschenLogoWhite} alt="Waschen Laundry" className="h-11 w-auto object-contain drop-shadow-lg" />
+                    </div>
                 </div>
 
+                {/* Kartu form — mengambang di atas hero pada mobile */}
+                <div className="relative z-10 -mt-8 lg:mt-0 grow lg:grow-0 flex flex-col px-4 sm:px-6 lg:px-0 pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:pb-0">
+                    <div className="w-full max-w-md mx-auto bg-white lg:bg-transparent rounded-3xl lg:rounded-none border border-[#e0e0e0] lg:border-0 shadow-xl lg:shadow-none p-6 sm:p-7 lg:p-0">
 
+                        {/* Form Header (Aligned with input width) */}
+                        <div className="mb-6 text-left">
+                            <h2 className="text-2xl lg:text-xl font-bold text-[#313030] tracking-tight">
+                                Selamat Datang
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                Masuk ke akun portal Anda, atau lacak progres cucian tanpa login.
+                            </p>
+                        </div>
 
-                {/* Form Container */}
-                <form onSubmit={handleLogin} className="w-full max-w-md mx-auto space-y-5">
+                        {/* Login akun portal */}
+                        <form onSubmit={handleLogin} className="space-y-5">
                     {/* Username Input */}
                     <div>
-                        <label className="block text-[10px] font-bold text-[#313030] uppercase tracking-wider mb-1.5">
-                            Username or Email
+                        <label htmlFor="login-username" className="block text-[10px] font-bold text-[#313030] uppercase tracking-wider mb-1.5">
+                            Username atau Email
                         </label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#5f1340] transition-colors">
                                 <User className="h-4.5 w-4.5" />
                             </div>
                             <input
+                                id="login-username"
+                                name="username"
                                 type="text"
                                 required
+                                autoComplete="username"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                placeholder="Enter your username"
-                                className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#e0e0e0] rounded-lg text-[#313030] placeholder-slate-400 focus:outline-none focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] transition-all duration-200 text-sm shadow-sm"
+                                placeholder="Masukkan username Anda"
+                                className="w-full pl-11 pr-4 py-3 sm:py-2.5 bg-white border border-[#e0e0e0] rounded-lg text-[#313030] placeholder-slate-400 focus:outline-none focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] transition-all duration-200 text-base sm:text-sm shadow-sm"
                             />
                         </div>
                     </div>
@@ -336,7 +346,7 @@ export default function LoginPage() {
                     {/* Password Input */}
                     <div>
                         <div className="flex justify-between items-center mb-1.5">
-                            <label className="block text-[10px] font-bold text-[#313030] uppercase tracking-wider">
+                            <label htmlFor="login-password" className="block text-[10px] font-bold text-[#313030] uppercase tracking-wider">
                                 Password
                             </label>
                         </div>
@@ -345,17 +355,21 @@ export default function LoginPage() {
                                 <Lock className="h-4.5 w-4.5" />
                             </div>
                             <input
+                                id="login-password"
+                                name="password"
                                 type={showPassword ? 'text' : 'password'}
                                 required
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
-                                className="w-full pl-11 pr-10 py-2.5 bg-white border border-[#e0e0e0] rounded-lg text-[#313030] placeholder-slate-400 focus:outline-none focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] transition-all duration-200 text-sm shadow-sm"
+                                placeholder="Masukkan password Anda"
+                                className="w-full pl-11 pr-11 py-3 sm:py-2.5 bg-white border border-[#e0e0e0] rounded-lg text-[#313030] placeholder-slate-400 focus:outline-none focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] transition-all duration-200 text-base sm:text-sm shadow-sm"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-650 transition-colors"
+                                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-650 transition-colors"
                             >
                                 {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                             </button>
@@ -366,23 +380,20 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full relative py-2.5 px-4 bg-[#5f1340] hover:bg-[#4a0d31] disabled:bg-slate-400 text-white rounded-lg font-semibold shadow-md flex items-center justify-center gap-2 group transition-all duration-300 overflow-hidden"
+                        className="w-full relative py-3 sm:py-2.5 px-4 bg-[#5f1340] hover:bg-[#4a0d31] active:scale-[0.99] disabled:bg-slate-400 disabled:active:scale-100 text-white rounded-lg font-semibold shadow-md flex items-center justify-center gap-2 group transition-all duration-200 overflow-hidden cursor-pointer"
                     >
-                        {/* Shimmer effect */}
-                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></span>
-
                         {isLoading ? (
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
                             <>
-                                <span>Log In to Portal</span>
+                                <span>Masuk ke Portal</span>
                                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                             </>
                         )}
                     </button>
 
-                    {/* Divider: Or login with */}
-                    <div className="relative flex items-center justify-center my-4">
+                    {/* Divider: Or login with — sementara di-hide */}
+                    <div className="hidden relative items-center justify-center my-4">
                         <div className="flex-grow border-t border-[#e0e0e0]"></div>
                         <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-[#f8f8f8] px-2">
                             Or continue with
@@ -390,8 +401,8 @@ export default function LoginPage() {
                         <div className="flex-grow border-t border-[#e0e0e0]"></div>
                     </div>
 
-                    {/* Social/Phone Login Buttons */}
-                    <div className="grid grid-cols-3 gap-2.5">
+                    {/* Social/Phone Login Buttons — sementara di-hide */}
+                    <div className="hidden grid-cols-3 gap-2.5">
                         <button
                             type="button"
                             className="flex items-center justify-center gap-2 py-2.5 px-3 border border-[#e0e0e0] hover:border-slate-300 active:scale-95 rounded-lg bg-white shadow-sm hover:shadow transition-all text-xs font-semibold text-[#313030] cursor-pointer"
@@ -438,40 +449,42 @@ export default function LoginPage() {
                             </button>
                         </p>
                     </div>
-                </form>
+                        </form>
 
-                {/* Section for Customers: Track Laundry */}
-                <div className="w-full max-w-md mx-auto mt-6 pt-5 border-t border-[#e0e0e0]/60 text-center font-sans">
-                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Pelanggan Waschen?</p>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/tracking')}
-                        className="mt-2.5 w-full py-2.5 px-4 bg-white border border-[#5f1340] text-[#5f1340] hover:bg-[#5f1340]/5 active:scale-98 rounded-lg font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md"
-                    >
-                        <Search className="h-4 w-4" />
-                        <span>Lacak Progres Cucian Anda (Tracking)</span>
-                    </button>
-                </div>
+                        {/* Aksi pelanggan: Lacak progres & pasang aplikasi (PWA) */}
+                        <div className="mt-6 pt-5 border-t border-[#e0e0e0] space-y-3">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
+                                Tanpa perlu login
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/tracking')}
+                                className="w-full py-3 sm:py-2.5 px-4 bg-white border border-[#5f1340] text-[#5f1340] hover:bg-[#5f1340]/5 active:scale-[0.99] rounded-lg font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md"
+                            >
+                                <Search className="h-4 w-4" />
+                                <span>Lacak Progres Cucian Anda</span>
+                            </button>
+                            <InstallPwaButton />
+                        </div>
+                    </div>
 
-                {/* Footer info (Copyright & Registration) */}
-                <div className="w-full max-w-md mx-auto text-center">
-                    <div className="mt-8 text-[10px] text-slate-400">
-                        &copy; {new Date().getFullYear()} PT Waschen Alora Indonesia. All rights reserved.
+                    {/* Footer info (Copyright) — beri ruang agar tak tertutup maskot di mobile */}
+                    <div className="w-full max-w-md mx-auto text-center mt-8 pb-20 lg:pb-0">
+                        <p className="text-[10px] text-slate-400">
+                            &copy; {new Date().getFullYear()} PT Waschen Alora Indonesia. All rights reserved.
+                        </p>
                     </div>
                 </div>
             </div>
 
             {/* Floating Mascot Widget */}
-            <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans">
+            <div className="fixed right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 z-50 flex flex-col items-end gap-3 font-sans">
                 {/* Chat Info Box (Visible when isChatOpen is true) */}
                 {isChatOpen && (
-                    <div className="w-80 bg-white rounded-2xl shadow-2xl border border-[#e0e0e0] overflow-hidden flex flex-col animate-fade-in text-[#313030]">
+                    <div className="w-[min(20rem,calc(100vw-2rem))] bg-white rounded-2xl shadow-2xl border border-[#e0e0e0] overflow-hidden flex flex-col animate-fade-in text-[#313030]">
                         {/* Chat Header */}
                         <div className="bg-[#5f1340] text-white px-4 py-3 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
-                                <span className="font-bold text-xs">Waschen Portal Information</span>
-                            </div>
+                            <span className="font-bold text-xs">Waschen Portal Information</span>
                             <button
                                 type="button"
                                 onClick={() => setIsChatOpen(false)}
@@ -517,7 +530,7 @@ export default function LoginPage() {
                 <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setIsChatOpen(!isChatOpen)}>
                     {/* Speech Invite Bubble (shown if chat is closed) */}
                     {!isChatOpen && (
-                        <div className="bg-white text-[#5f1340] border border-[#e0e0e0] px-3.5 py-1.5 rounded-full text-[11px] font-bold shadow-lg animate-bounce-short select-none group-hover:scale-105 transition-transform duration-200">
+                        <div className="hidden sm:block bg-white text-[#5f1340] border border-[#e0e0e0] px-3.5 py-1.5 rounded-full text-[11px] font-bold shadow-lg select-none group-hover:scale-105 transition-transform duration-200">
                             Hi, Welcome to Waschen Laundry!
                         </div>
                     )}
@@ -525,8 +538,8 @@ export default function LoginPage() {
                     {/* Mascot Image */}
                     <img
                         src={maskotLogo}
-                        alt="Mascot Helper"
-                        className="h-20 w-auto object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.3)] transition-transform duration-200 group-hover:scale-110 active:scale-95"
+                        alt="Bantuan"
+                        className="h-14 sm:h-20 w-auto object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.3)] transition-transform duration-200 group-hover:scale-110 active:scale-95"
                     />
                 </div>
             </div>

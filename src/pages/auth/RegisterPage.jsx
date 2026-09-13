@@ -74,7 +74,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Registrasi Member | Waschen Laundry';
+    document.title = 'Registrasi Member | My Waschen';
     const id = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
     }, 4500);

@@ -126,7 +126,7 @@ export default function CustomerDashboard() {
   const [bookingStep, setBookingStep] = useState(1); // 1=service, 2=detail, 3=confirm
 
   useEffect(() => {
-    document.title = 'Dashboard | Waschen Laundry';
+    document.title = 'Dashboard | My Waschen';
     const name = localStorage.getItem('fullName') || localStorage.getItem('username') || 'Pelanggan';
     setProfile(p => ({ ...p, fullName: name, username: localStorage.getItem('username') || '' }));
   }, []);
