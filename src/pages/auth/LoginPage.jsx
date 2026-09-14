@@ -22,6 +22,8 @@ import img3 from '../../assets/images/3.png';
 import img4 from '../../assets/images/4.png';
 import img5 from '../../assets/images/5.png';
 import img6 from '../../assets/images/6.png';
+import img7 from '../../assets/images/7.png';
+import img8 from '../../assets/images/8.png';
 import waschenLogo from '../../assets/images/waschen.png';
 import waschenLogoWhite from '../../assets/images/waschen_white.png';
 import maskotLogo from '../../assets/images/maskot.png';
@@ -31,9 +33,9 @@ import maskotHappyLogo from '../../assets/images/maskot_happy.png';
 const SLIDES = [
     {
         img: img1,
-        title: 'Premium Quality Services',
-        caption: 'Delivering the highest hygiene standards for customer satisfaction.',
-        tag: 'Quality Standards'
+        title: 'Welcome With Care',
+        caption: 'Every guest is greeted with warmth and the Waschen standard of hospitality.',
+        tag: 'Frontliner Service'
     },
     {
         img: img2,
@@ -64,6 +66,18 @@ const SLIDES = [
         title: 'VIP Laundry',
         caption: 'Dedicated service with fast response and a personal touch.',
         tag: 'VIP Laundry'
+    },
+    {
+        img: img7,
+        title: 'Ready to Wear',
+        caption: 'Garments returned clean, pressed, and carefully packed for a premium finish.',
+        tag: 'Finishing & Packing'
+    },
+    {
+        img: img8,
+        title: 'Professional Finishing',
+        caption: 'Steam-pressed to perfection so every piece looks crisp and ready to wear.',
+        tag: 'Garment Care'
     }
 ];
 

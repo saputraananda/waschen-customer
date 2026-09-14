@@ -7,16 +7,34 @@ import './index.css';
 
 initPwaInstallCapture();
 
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const CACHE_TS_KEY = 'waschen_customer_cache_at';
+
+function refreshIfCacheExpired() {
+  if (document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  const last = Number(localStorage.getItem(CACHE_TS_KEY) || 0);
+  if (last > 0 && now - last >= CACHE_TTL_MS) {
+    localStorage.setItem(CACHE_TS_KEY, String(now));
+    window.location.reload();
+    return;
+  }
+  if (!last) localStorage.setItem(CACHE_TS_KEY, String(now));
+}
+
 // iOS PWA standalone tidak reload saat resume dari background -> update SW tak pernah terdeteksi.
-// Paksa cek update saat app kembali foreground + tiap 1 jam.
 const updateSW = registerSW({
   immediate: true,
   onRegisteredSW(_url, reg) {
-    if (!reg) return;
-    const check = () => { if (document.visibilityState === 'visible') reg.update(); };
-    document.addEventListener('visibilitychange', check);
-    window.addEventListener('focus', check);
-    setInterval(check, 60 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (reg) reg.update();
+      refreshIfCacheExpired();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    setInterval(() => { if (reg) reg.update(); }, CACHE_TTL_MS);
+    refreshIfCacheExpired();
   },
   onNeedRefresh() { updateSW(true); },
 });

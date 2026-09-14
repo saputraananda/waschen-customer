@@ -35,8 +35,65 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api/, /^\/uploads/],
         clientsClaim: true,
         skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /\/api\//,
+            handler: 'NetworkOnly',
+          },
+          {
+            urlPattern: /\/uploads\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'waschen-uploads',
+              networkTimeoutSeconds: 4,
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 15 * 60,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'waschen-pages',
+              networkTimeoutSeconds: 4,
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 15 * 60,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /\.(?:js|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'waschen-static',
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 15 * 60,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|gif|webp|svg|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'waschen-images',
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 24 * 60 * 60,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
     }),
   ],
   server: {
