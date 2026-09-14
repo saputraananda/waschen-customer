@@ -51,6 +51,75 @@ const formatQty = (qty, unit) => {
   return `${pretty} ${unit || ''}`.trim();
 };
 
+function ProgressStepper({ steps, overallStatus, getStepIndex }) {
+  const activeIdx = getStepIndex(overallStatus);
+
+  return (
+    <>
+      <ol className="md:hidden flex flex-col gap-0">
+        {steps.map((step, idx) => {
+          const isCompleted = idx <= activeIdx;
+          const isActive = idx === activeIdx;
+          const isLast = idx === steps.length - 1;
+          return (
+            <li key={step.name} className="flex gap-3">
+              <div className="flex flex-col items-center shrink-0">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${isCompleted
+                  ? 'bg-[#5f1340] border-[#5f1340] text-white'
+                  : 'bg-white border-[#e0e0e0] text-slate-300'
+                  } ${isActive ? 'ring-4 ring-[#5f1340]/20' : ''}`}>
+                  {isCompleted
+                    ? <CheckCircle2 className="h-4 w-4" />
+                    : <span className="text-[11px] font-black">{idx + 1}</span>}
+                </div>
+                {!isLast && (
+                  <div className={`w-px grow min-h-[22px] ${idx < activeIdx ? 'bg-[#5f1340]' : 'bg-slate-200'}`} />
+                )}
+              </div>
+              <div className={`min-w-0 pb-4 ${isLast ? 'pb-0' : ''}`}>
+                <p className={`text-xs font-extrabold leading-8 ${isCompleted ? 'text-[#5f1340]' : 'text-slate-400'}`}>
+                  {step.label || step.name}
+                  {isActive ? ` · ${step.percentage ?? 0}%` : ''}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="hidden md:block relative">
+        <div className="relative flex justify-between items-start w-full px-2">
+          <div className="absolute left-0 right-0 h-1 bg-slate-100 top-[18px] z-0 rounded-full mx-6">
+            <div
+              className="h-full bg-[#5f1340] transition-all duration-500 rounded-full"
+              style={{ width: `${steps.length > 1 ? (Math.max(0, activeIdx) / (steps.length - 1)) * 100 : 0}%` }}
+            />
+          </div>
+          {steps.map((step, idx) => {
+            const isCompleted = idx <= activeIdx;
+            const isActive = idx === activeIdx;
+            return (
+              <div key={step.name} className="flex flex-col items-center z-10 relative flex-1 min-w-0">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
+                  ? 'bg-[#5f1340] border-[#5f1340] text-white shadow-sm'
+                  : 'bg-white border-[#e0e0e0] text-slate-300'
+                  } ${isActive ? 'ring-4 ring-[#5f1340]/20 scale-105' : ''}`}>
+                  {isCompleted
+                    ? <CheckCircle2 className="h-4 w-4" />
+                    : <span className="text-xs font-black">{idx + 1}</span>}
+                </div>
+                <span className={`text-[10px] font-extrabold mt-2.5 text-center leading-tight px-0.5 ${isCompleted ? 'text-[#5f1340]' : 'text-slate-400'}`}>
+                  {step.label || step.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function CustomerTrackingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -143,7 +212,7 @@ export default function CustomerTrackingPage() {
   const overallPercent = Number(trackedOrder?.work_status) || getStepPercentage(overallStatus);
 
   return (
-    <div className="relative min-h-screen bg-[#f8f8f8] text-[#313030] flex flex-col font-sans antialiased">
+    <div className="relative min-h-screen min-h-dvh bg-[#f8f8f8] text-[#313030] flex flex-col font-sans antialiased overflow-x-hidden">
       <Toast
         isOpen={toast.isOpen}
         onClose={() => setToast(prev => ({ ...prev, isOpen: false }))}
@@ -163,44 +232,47 @@ export default function CustomerTrackingPage() {
       <div className="absolute bottom-[-250px] right-[-250px] w-[500px] h-[500px] rounded-full bg-[#5f1340]/3 filter blur-[150px] pointer-events-none" />
 
       {/* Header navbar */}
-      <header className="relative z-20 bg-white border-b border-[#e0e0e0]/60 shadow-sm px-4 md:px-8 py-4">
-        <div className="max-w-[1400px] w-full mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#e0e0e0]/60 shadow-sm px-4 md:px-8 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="max-w-[1400px] w-full mx-auto flex items-center justify-between min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => navigate('/login')}
-              className="p-2 rounded-xl text-slate-400 hover:text-[#5f1340] hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all flex items-center gap-1.5 font-black text-xs cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-[#5f1340] hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all flex items-center gap-1.5 font-black text-xs cursor-pointer shrink-0"
             >
-              <ArrowLeft className="h-4.5 w-4.5" />
+              <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Kembali</span>
             </button>
-            <div className="h-6 w-[1px] bg-[#e0e0e0]" />
-            <img src={waschenLogo} alt="Waschen Logo" className="h-8 md:h-9 w-auto object-contain" />
+            <div className="h-6 w-px bg-[#e0e0e0] shrink-0" />
+            <img src={waschenLogo} alt="Waschen Logo" className="h-7 sm:h-8 md:h-9 w-auto max-w-[140px] object-contain object-left" />
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-[1400px] w-full mx-auto p-4 sm:p-6 md:p-8 grow flex flex-col gap-6">
+      <main className="relative z-10 max-w-[1400px] w-full mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] grow flex flex-col gap-4 sm:gap-6 min-w-0">
 
         {/* Search Panel Card */}
-        <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-6 sm:p-8 flex flex-col gap-5">
-          <div className="text-center sm:text-left">
-            <h2 className="text-2xl font-black text-[#5f1340] tracking-tight">Lacak Progres Cucian Anda</h2>
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-5 min-w-0">
+          <div className="text-left">
+            <h2 className="text-lg sm:text-2xl font-black text-[#5f1340] tracking-tight leading-snug">Lacak Progres Cucian Anda</h2>
             <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
-              Masukkan nomor nota Anda, atau scan QR / barcode yang tertera pada nota untuk memantau progres pengerjaan.
+              Masukkan nomor nota, atau scan QR / barcode pada nota untuk memantau progres.
             </p>
           </div>
 
-          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
             <div className="relative grow min-w-0">
               <input
                 type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
                 value={notaNumber}
                 onChange={(e) => setNotaNumber(e.target.value)}
                 placeholder="Ketik Nomor Nota..."
-                className="w-full min-w-0 bg-white border border-[#e0e0e0] focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-[#313030] shadow-sm outline-none uppercase font-mono"
+                className="w-full min-w-0 bg-white border border-[#e0e0e0] focus:border-[#5f1340] focus:ring-1 focus:ring-[#5f1340] rounded-2xl py-3 sm:py-3.5 pl-11 pr-12 text-sm font-bold text-[#313030] shadow-sm outline-none uppercase font-mono"
               />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                <Search className="h-4.5 w-4.5" />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 pointer-events-none">
+                <Search className="h-4 w-4" />
               </div>
               <button
                 type="button"
@@ -214,7 +286,7 @@ export default function CustomerTrackingPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="py-3.5 px-6 bg-[#5f1340] hover:bg-[#4d0f33] disabled:bg-slate-400 text-white text-xs font-black rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto py-3 sm:py-3.5 px-6 bg-[#5f1340] hover:bg-[#4d0f33] disabled:bg-slate-400 text-white text-xs font-black rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               {isLoading
                 ? <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
@@ -225,67 +297,36 @@ export default function CustomerTrackingPage() {
 
         {/* Tracking Details Result Grid */}
         {trackedOrder ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0">
 
-            <div className="lg:col-span-2 flex flex-col gap-6">
+            <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 min-w-0">
 
               {/* Card 1: Overall Progress Stepper */}
-              <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-6 sm:p-8 flex flex-col gap-6">
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6 min-w-0">
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-5">
-                  <div>
+                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:pb-5">
+                  <div className="min-w-0">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nomor Nota</span>
-                    <span className="text-xl font-black text-[#5f1340] font-mono block mt-0.5">{trackedOrder.order_no}</span>
+                    <span className="text-base sm:text-xl font-black text-[#5f1340] font-mono block mt-0.5 break-all">{trackedOrder.order_no}</span>
                   </div>
-                  <div className="text-left sm:text-right">
+                  <div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Status Keseluruhan</span>
-                    <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-extrabold text-xs mt-1 border ${STATUS_THEMES[overallStatus]?.bg || 'bg-slate-100 text-slate-500 border-slate-200'
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-extrabold text-xs mt-1 border max-w-full ${STATUS_THEMES[overallStatus]?.bg || 'bg-slate-100 text-slate-500 border-slate-200'
                       }`}>
-                      <Clock className="h-3.5 w-3.5" />
-                      {overallStatus} &bull; {overallPercent}%
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{overallStatus} · {overallPercent}%</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="py-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-6">Timeline Progres Keseluruhan</span>
-
-                  <div className="relative flex justify-between items-start w-full px-2">
-                    <div className="absolute left-0 right-0 h-1 bg-slate-100 top-4.5 z-0 rounded-full mx-6">
-                      <div
-                        className="h-full bg-[#5f1340] transition-all duration-500 rounded-full"
-                        style={{ width: `${steps.length > 1 ? (Math.max(0, getStepIndex(overallStatus)) / (steps.length - 1)) * 100 : 0}%` }}
-                      />
-                    </div>
-
-                    {steps.map((step, idx) => {
-                      const activeIdx = getStepIndex(overallStatus);
-                      const isCompleted = idx <= activeIdx;
-                      const isActive = idx === activeIdx;
-
-                      return (
-                        <div key={step.name} className="flex flex-col items-center z-10 relative flex-1 min-w-0">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted
-                            ? 'bg-[#5f1340] border-[#5f1340] text-white shadow-sm'
-                            : 'bg-white border-[#e0e0e0] text-slate-300'
-                            } ${isActive ? 'ring-4 ring-[#5f1340]/20 scale-105' : ''}`}>
-                            {isCompleted
-                              ? <CheckCircle2 className="h-4.5 w-4.5" />
-                              : <span className="text-xs font-black">{idx + 1}</span>}
-                          </div>
-                          <span className={`text-[9px] sm:text-[10px] font-extrabold mt-2.5 text-center leading-tight px-0.5 ${isCompleted ? 'text-[#5f1340]' : 'text-slate-400'
-                            }`}>
-                            {step.label || step.name}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div className="py-1 sm:py-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-4 sm:mb-6">Timeline Progres Keseluruhan</span>
+                  <ProgressStepper steps={steps} overallStatus={overallStatus} getStepIndex={getStepIndex} />
                 </div>
               </div>
 
               {/* Card 2: Items Breakdown */}
-              <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-6 sm:p-8 flex flex-col gap-5">
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-5 min-w-0">
                 <div>
                   <h3 className="text-base font-black text-[#5f1340] tracking-tight">Rincian Item & Progres Pengerjaan</h3>
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -300,25 +341,25 @@ export default function CustomerTrackingPage() {
                     const theme = STATUS_THEMES[item.item_work_status] || { bar: 'bg-slate-300', bg: 'bg-slate-50 border-slate-200 text-slate-500' };
 
                     return (
-                      <div key={item.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-4 sm:p-5 flex flex-col gap-4">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                          <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            <span className="text-xs font-black text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1 font-mono">
+                      <div key={item.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-3.5 sm:p-5 flex flex-col gap-3 sm:gap-4 min-w-0">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <span className="text-xs font-black text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1 font-mono shrink-0">
                               #{idx + 1}
                             </span>
-                            <h4 className="text-xs font-black text-[#313030]">{item.service_name}</h4>
+                            <h4 className="text-xs font-black text-[#313030] break-words leading-snug">{item.service_name}</h4>
                           </div>
 
-                          <div className="text-left sm:text-right shrink-0">
+                          <div className="text-right shrink-0">
                             <span className="text-[9px] text-slate-400 block uppercase font-bold">Jumlah</span>
                             <span className="text-xs font-extrabold text-slate-700">{formatQty(item.qty, item.unit)}</span>
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-2 pt-2 border-t border-slate-200/50">
-                          <div className="flex justify-between items-center gap-2">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Progres Item</span>
-                            <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${theme.bg}`}>
+                          <div className="flex justify-between items-center gap-2 min-w-0">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider shrink-0">Progres Item</span>
+                            <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border truncate max-w-[60%] ${theme.bg}`}>
                               {item.item_work_status}
                             </span>
                           </div>
@@ -327,7 +368,7 @@ export default function CustomerTrackingPage() {
                             <div className={`h-full ${theme.bar} transition-all duration-500`} style={{ width: `${percentVal}%` }} />
                           </div>
 
-                          <div className="flex text-center mt-1 text-[8px] font-extrabold">
+                          <div className="hidden sm:flex text-center mt-1 text-[8px] font-extrabold">
                             {steps.map((s, sIdx) => (
                               <span
                                 key={s.name}
@@ -346,38 +387,38 @@ export default function CustomerTrackingPage() {
             </div>
 
             {/* Right Column */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 sm:gap-6 min-w-0">
 
-              <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-6 flex flex-col gap-4">
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm p-4 sm:p-6 flex flex-col gap-4 min-w-0">
                 <h4 className="text-xs font-black text-[#5f1340] uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-slate-100">
                   <Calendar className="h-4 w-4" />
                   Rincian Nota
                 </h4>
 
-                <div className="flex flex-col gap-2 text-xs font-semibold text-slate-600">
-                  <div className="flex justify-between gap-3">
+                <div className="flex flex-col gap-2.5 text-xs font-semibold text-slate-600">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Nama Pelanggan</span>
-                    <span className="font-extrabold text-[#313030] text-right">{trackedOrder.customer_name || '-'}</span>
+                    <span className="font-extrabold text-[#313030] text-right break-words min-w-0">{trackedOrder.customer_name || '-'}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Outlet</span>
-                    <span className="font-bold text-[#313030] text-right">{trackedOrder.outlet_name || '-'}</span>
+                    <span className="font-bold text-[#313030] text-right break-words min-w-0">{trackedOrder.outlet_name || '-'}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Tanggal Masuk</span>
                     <span className="font-bold text-[#313030] text-right">{formatDateTime(trackedOrder.order_date)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Estimasi Selesai</span>
                     <span className="font-bold text-[#313030] text-right">{formatDateTime(trackedOrder.estimated_finished_at)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Durasi / Paket</span>
-                    <span className="font-bold text-[#313030] text-right">{trackedOrder.speed_name || '-'}</span>
+                    <span className="font-bold text-[#313030] text-right break-words min-w-0">{trackedOrder.speed_name || '-'}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-slate-400 shrink-0">Parfum</span>
-                    <span className="font-bold text-[#313030] text-right">{trackedOrder.parfume_name || '-'}</span>
+                    <span className="font-bold text-[#313030] text-right break-words min-w-0">{trackedOrder.parfume_name || '-'}</span>
                   </div>
 
                   <div className="h-px bg-slate-100 my-2" />
@@ -392,9 +433,9 @@ export default function CustomerTrackingPage() {
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-baseline mt-1.5 gap-3">
-                    <span className="text-slate-400 text-xs">Total</span>
-                    <span className="text-lg font-black text-[#5f1340]">
+                  <div className="flex justify-between items-baseline mt-1.5 gap-3 min-w-0">
+                    <span className="text-slate-400 text-xs shrink-0">Total</span>
+                    <span className="text-base sm:text-lg font-black text-[#5f1340] text-right break-all">
                       Rp {Number(trackedOrder.grand_total || 0).toLocaleString('id-ID')}
                     </span>
                   </div>
@@ -402,7 +443,7 @@ export default function CustomerTrackingPage() {
               </div>
 
               {(trackedOrder.logs || []).length > 0 && (
-                <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-6 flex flex-col gap-4">
+                <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm p-4 sm:p-6 flex flex-col gap-4 min-w-0">
                   <h4 className="text-xs font-black text-[#5f1340] uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-slate-100">
                     <TrendingUp className="h-4 w-4" />
                     Log Aktivitas
@@ -428,7 +469,7 @@ export default function CustomerTrackingPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#e0e0e0] shadow-sm px-5 py-10 sm:p-12 flex flex-col items-center justify-center text-center gap-4">
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-full">
               <Package className="h-10 w-10 text-[#5f1340]" />
             </div>

@@ -119,8 +119,8 @@ export default function NotaScanner({ isOpen, onClose, onDetected }) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-sans">
-            <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-2xl p-6 max-w-md w-full flex flex-col gap-4 text-[#313030]">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans">
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl border border-[#e0e0e0] shadow-2xl p-4 sm:p-6 max-w-md w-full flex flex-col gap-4 text-[#313030] max-h-[92dvh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-2">
                         <Camera className="h-5 w-5 text-[#5f1340]" />
