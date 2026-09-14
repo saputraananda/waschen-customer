@@ -33,7 +33,7 @@ import maskotHappyLogo from '../../assets/images/maskot_happy.png';
 const SLIDES = [
     {
         img: img1,
-        title: 'Welcome With Care',
+        title: 'Welcome to Waschen Laundry',
         caption: 'Every guest is greeted with warmth and the Waschen standard of hospitality.',
         tag: 'Frontliner Service'
     },
