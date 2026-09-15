@@ -13,18 +13,8 @@ import waschenLogoWhite from '../assets/images/waschen_white.png';
 import maskotHappyLogo from '../assets/images/maskot_happy.png';
 
 // ============================================================
-// MOCK DATA
+// Static / marketing content (bukan data transaksi pelanggan)
 // ============================================================
-const CUSTOMER_PROFILE = {
-  fullName: localStorage.getItem('fullName') || 'Budi Santoso',
-  username: localStorage.getItem('username') || 'budi_s',
-  phone: '08123456789',
-  points: 1240,
-  tier: 'Silver',
-  totalOrders: 18,
-  joinDate: 'Jan 2025',
-};
-
 const TIER_CONFIG = {
   Bronze:  { min: 0,    max: 999,  next: 'Silver', color: 'from-amber-700 to-amber-500',  badge: 'bg-amber-100 text-amber-800 border-amber-200' },
   Silver:  { min: 1000, max: 2999, next: 'Gold',   color: 'from-slate-500 to-slate-400',  badge: 'bg-slate-100 text-slate-700 border-slate-200' },
@@ -32,36 +22,18 @@ const TIER_CONFIG = {
   Platinum:{ min: 10000,max: Infinity,next:null,    color: 'from-violet-600 to-violet-400', badge: 'bg-violet-50 text-violet-800 border-violet-200' },
 };
 
-const ACTIVE_ORDERS = [
-  {
-    id: 'WS-0824002',
-    service: 'Bed Cover King + Selimut',
-    speed: 'Kilat (24 Jam)',
-    status: 'Pencucian',
-    date: '12 Agu 2026',
-    estimasi: '13 Agu 2026',
-    amount: 79000,
-    items: 3,
-  },
-  {
-    id: 'WS-0824005',
-    service: 'Cuci + Setrika (5.2 Kg)',
-    speed: 'Reguler (2 Hari)',
-    status: 'Siap Diambil',
-    date: '11 Agu 2026',
-    estimasi: '13 Agu 2026',
-    amount: 92000,
-    items: 2,
-  },
-];
-
-const HISTORY_ORDERS = [
-  { id: 'WS-0824001', service: 'Pakaian Harian + Jas Wool', speed: 'Reguler', amount: 80000, date: '10 Agu 2026', payStatus: 'Lunas', type: 'Kiloan+Satuan', pointsEarned: 80 },
-  { id: 'WS-0824003', service: 'Cuci Saja (3 Kg) + Sepatu', speed: 'Express', amount: 61000, date: '8 Agu 2026',  payStatus: 'Lunas', type: 'Kiloan+Satuan', pointsEarned: 61 },
-  { id: 'WS-0824004', service: 'Jas Blazer + Kemeja Putih', speed: 'Reguler', amount: 61000, date: '5 Agu 2026',  payStatus: 'Lunas', type: 'Satuan',        pointsEarned: 61 },
-  { id: 'WS-0723009', service: 'Cuci + Setrika (6 Kg)',     speed: 'Reguler', amount: 60000, date: '28 Jul 2026', payStatus: 'Lunas', type: 'Kiloan',         pointsEarned: 60 },
-  { id: 'WS-0723007', service: 'Gordyn Tebal 2 Pcs',         speed: 'Kilat',   amount: 60000, date: '20 Jul 2026', payStatus: 'Lunas', type: 'Satuan',         pointsEarned: 60 },
-];
+const PICKUP_STEPS = ['Antrean','Pencucian','Penyetrikaan','Pengemasan','Siap Diambil','Selesai'];
+const DELIVERY_STEPS = ['Antrean','Pencucian','Penyetrikaan','Pengemasan','Siap Diantar','Sedang Diantar','Selesai'];
+const STEP_SHORT = {
+  Antrean: 'Antre',
+  Pencucian: 'Cuci',
+  Penyetrikaan: 'Setrika',
+  Pengemasan: 'Kemas',
+  'Siap Diambil': 'Siap',
+  'Siap Diantar': 'Siap antar',
+  'Sedang Diantar': 'Diantar',
+  Selesai: 'Selesai',
+};
 
 const PROMOS = [
   { code: 'WASCHEN20',  title: 'Diskon 20% Kiloan',       desc: 'Khusus pelanggan Silver ke atas. Min. order 3 Kg.',  until: '31 Agu 2026', color: 'from-[#5f1340] to-[#9b2459]',    badge: 'Terbatas' },
@@ -94,22 +66,46 @@ const SPEEDS     = [
 ];
 const METHODS    = ['Antar ke Outlet', 'Pickup Jemput (hubungi CS)'];
 
-const STATUS_STEPS = ['Antrean','Pencucian','Penyetrikaan','Siap Diambil','Selesai'];
 const STATUS_COLORS = {
-  'Antrean':     'bg-slate-100 text-slate-600 border-slate-200',
-  'Pencucian':   'bg-[#5f1340]/10 text-[#5f1340] border-[#5f1340]/15',
-  'Penyetrikaan':'bg-indigo-50 text-indigo-700 border-indigo-100',
-  'Siap Diambil':'bg-amber-50 text-amber-700 border-amber-100',
-  'Selesai':     'bg-emerald-50 text-emerald-700 border-emerald-100',
+  'Antrean':       'bg-slate-100 text-slate-600 border-slate-200',
+  'Pencucian':     'bg-[#5f1340]/10 text-[#5f1340] border-[#5f1340]/15',
+  'Penyetrikaan':  'bg-indigo-50 text-indigo-700 border-indigo-100',
+  'Pengemasan':    'bg-violet-50 text-violet-700 border-violet-100',
+  'Siap Diambil':  'bg-amber-50 text-amber-700 border-amber-100',
+  'Siap Diantar':  'bg-sky-50 text-sky-700 border-sky-100',
+  'Sedang Diantar':'bg-blue-50 text-blue-700 border-blue-100',
+  'Selesai':       'bg-emerald-50 text-emerald-700 border-emerald-100',
 };
 const STATUS_BAR = {
-  'Antrean':20,'Pencucian':45,'Penyetrikaan':70,'Siap Diambil':90,'Selesai':100
+  'Antrean':15,'Pencucian':35,'Penyetrikaan':55,'Pengemasan':70,
+  'Siap Diambil':85,'Siap Diantar':85,'Sedang Diantar':92,'Selesai':100
 };
+
+function readSessionProfile() {
+  const fullName = localStorage.getItem('fullName') || localStorage.getItem('username') || 'Pelanggan';
+  const username = localStorage.getItem('username') || '';
+  const points = Number(localStorage.getItem('customerPoints') || 0);
+  let tier = 'Bronze';
+  if (points >= 10000) tier = 'Platinum';
+  else if (points >= 3000) tier = 'Gold';
+  else if (points >= 1000) tier = 'Silver';
+  return {
+    fullName,
+    username,
+    phone: localStorage.getItem('phone') || '',
+    points,
+    tier,
+    totalOrders: Number(localStorage.getItem('totalOrders') || 0),
+    joinDate: localStorage.getItem('joinDate') || '—',
+  };
+}
 
 // ============================================================
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState({ ...CUSTOMER_PROFILE });
+  const [profile, setProfile] = useState(() => readSessionProfile());
+  const [activeOrders] = useState([]);
+  const [historyOrders] = useState([]);
   const [toast, setToast] = useState({ isOpen: false, title: '', message: '', type: 'success' });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -127,8 +123,7 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     document.title = 'Dashboard | My Waschen';
-    const name = localStorage.getItem('fullName') || localStorage.getItem('username') || 'Pelanggan';
-    setProfile(p => ({ ...p, fullName: name, username: localStorage.getItem('username') || '' }));
+    setProfile(readSessionProfile());
   }, []);
 
   const showToast = (title, message, type = 'success') =>
@@ -185,13 +180,13 @@ export default function CustomerDashboard() {
   };
 
   // ---- Loyalty tier ----
-  const tier = TIER_CONFIG[profile.tier] || TIER_CONFIG.Silver;
+  const tier = TIER_CONFIG[profile.tier] || TIER_CONFIG.Bronze;
   const tierProgress = ((profile.points - tier.min) / (tier.max - tier.min)) * 100;
 
   // ---- History filter ----
   const filteredHistory = historyFilter === 'Semua'
-    ? HISTORY_ORDERS
-    : HISTORY_ORDERS.filter(o => o.type.includes(historyFilter));
+    ? historyOrders
+    : historyOrders.filter(o => o.type.includes(historyFilter));
 
   const toTitleCase = (t = '') => t.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
@@ -283,14 +278,16 @@ export default function CustomerDashboard() {
                 {/* Priority Club & Member Numbers */}
                 <div className="my-auto py-2">
                   <span className="text-[8px] sm:text-[9px] tracking-[0.25em] text-white/70 block uppercase font-bold">PRIORITY CLUB</span>
-                  <p className="text-xl sm:text-2xl font-mono tracking-[0.2em] text-white font-bold mt-0.5">2500 {String(profile.points).padStart(4, '0')} 109</p>
+                  <p className="text-xl sm:text-2xl font-mono tracking-[0.2em] text-white font-bold mt-0.5">
+                    {String(profile.points).padStart(4, '0')} · {profile.tier.toUpperCase()}
+                  </p>
                   <h2 className="text-sm sm:text-base font-black tracking-wider text-white uppercase mt-1">{profile.fullName}</h2>
                 </div>
 
                 {/* Footer Dates */}
                 <div className="flex gap-4 text-[9px] sm:text-[10px] text-white/40 font-mono uppercase">
-                  <div>Valid Thru <span className="text-white/80 font-bold ml-0.5">06/29</span></div>
-                  <div>Join Date <span className="text-white/80 font-bold ml-0.5">01/26</span></div>
+                  <div>Member <span className="text-white/80 font-bold ml-0.5">{profile.tier}</span></div>
+                  <div>Join <span className="text-white/80 font-bold ml-0.5">{profile.joinDate}</span></div>
                 </div>
               </div>
             </div>
@@ -335,7 +332,7 @@ export default function CustomerDashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 w-full">
             <div className="bg-white rounded-3xl border border-[#e0e0e0] p-5 flex flex-col justify-center shadow-xs">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Pesanan Aktif</p>
-              <p className="text-3xl font-black text-[#5f1340] mt-1">{ACTIVE_ORDERS.length}</p>
+              <p className="text-3xl font-black text-[#5f1340] mt-1">{activeOrders.length}</p>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">Sedang diproses</p>
             </div>
             <div className="bg-white rounded-3xl border border-[#e0e0e0] p-5 flex flex-col justify-center shadow-xs">
@@ -368,20 +365,36 @@ export default function CustomerDashboard() {
         {/* ======================================================== */}
         {/* ACTIVE ORDERS */}
         {/* ======================================================== */}
-        {ACTIVE_ORDERS.length > 0 && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black text-[#313030] flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#5f1340]" />Pesanan Aktif
-              </h2>
-              <button onClick={() => navigate('/tracking')}
-                className="text-[11px] font-bold text-[#5f1340] hover:underline flex items-center gap-1">
-                Lacak Semua <ChevronRight className="h-3.5 w-3.5" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-black text-[#313030] flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#5f1340]" />Pesanan Aktif
+            </h2>
+            <button onClick={() => navigate('/tracking')}
+              className="text-[11px] font-bold text-[#5f1340] hover:underline flex items-center gap-1">
+              Lacak Cucian <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {activeOrders.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-[#e0e0e0] p-8 flex flex-col items-center text-center gap-2">
+              <Package className="h-8 w-8 text-slate-300" />
+              <p className="text-sm font-bold text-[#313030]">Belum ada pesanan aktif</p>
+              <p className="text-[12px] text-slate-500 max-w-sm">
+                Pesanan dari outlet akan muncul di sini. Sementara bisa lacak cucian lewat nomor nota.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/tracking')}
+                className="mt-2 text-[12px] font-bold text-[#5f1340] hover:underline"
+              >
+                Lacak sekarang
               </button>
             </div>
+          ) : (
             <div className="flex flex-col gap-3">
-              {ACTIVE_ORDERS.map((o) => {
-                const stepIdx = STATUS_STEPS.indexOf(o.status);
+              {activeOrders.map((o) => {
+                const steps = o.journey === 'delivery' ? DELIVERY_STEPS : PICKUP_STEPS;
+                const stepIdx = Math.max(0, steps.indexOf(o.status));
                 const pct = STATUS_BAR[o.status] || 0;
                 return (
                   <div key={o.id} className="bg-white rounded-2xl border border-[#e0e0e0] shadow-xs p-4 sm:p-5 flex flex-col gap-3">
@@ -389,23 +402,31 @@ export default function CustomerDashboard() {
                       <div>
                         <span className="text-[10px] font-black text-slate-400 font-mono">{o.id}</span>
                         <p className="text-sm font-black text-[#313030] mt-0.5">{o.service}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{o.speed} · Est: {o.estimasi}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {o.speed} · Est: {o.estimasi}
+                          {o.journey === 'delivery' ? ' · Delivery' : ' · Ambil outlet'}
+                        </p>
                       </div>
                       <div className="flex items-start gap-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black border ${STATUS_COLORS[o.status]}`}>
-                          <Clock className="h-3 w-3 animate-pulse" />{o.status}
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black border ${STATUS_COLORS[o.status] || STATUS_COLORS.Antrean}`}>
+                          {o.status === 'Sedang Diantar' ? <Truck className="h-3 w-3" /> : <Clock className="h-3 w-3 animate-pulse" />}
+                          {o.status}
                         </span>
                         <span className="text-sm font-black text-[#5f1340]">Rp {o.amount.toLocaleString('id-ID')}</span>
                       </div>
                     </div>
-                    {/* Mini stepper */}
                     <div>
                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
                         <div className="h-full bg-[#5f1340] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                       </div>
-                      <div className="grid grid-cols-5 text-[8px] font-extrabold text-slate-400 text-center">
-                        {STATUS_STEPS.map((s, si) => (
-                          <span key={s} className={si <= stepIdx ? 'text-[#5f1340] font-black' : ''}>{s}</span>
+                      <div
+                        className="grid text-[8px] font-extrabold text-slate-400 text-center gap-x-0.5"
+                        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+                      >
+                        {steps.map((s, si) => (
+                          <span key={s} className={si <= stepIdx ? 'text-[#5f1340] font-black' : ''}>
+                            {STEP_SHORT[s] || s}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -417,8 +438,8 @@ export default function CustomerDashboard() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ======================================================== */}
         {/* PROMO SECTION */}
