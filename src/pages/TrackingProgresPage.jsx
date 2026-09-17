@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -17,6 +17,8 @@ import {
   Home,
   PartyPopper,
   Loader2,
+  Lock,
+  ShieldCheck,
 } from 'lucide-react';
 import Toast from '../components/Toast.jsx';
 import NotaScanner, { extractOrderNo } from '../components/NotaScanner.jsx';
@@ -224,6 +226,81 @@ function ProgressStepper({ steps, overallStatus }) {
   );
 }
 
+function AccessCodeBoxes({ value, onChange, disabled }) {
+  const digits = String(value || '').padEnd(4, ' ').slice(0, 4).split('');
+  const refs = useRef([]);
+
+  const commit = (next) => {
+    onChange(String(next).replace(/\D/g, '').slice(0, 4));
+  };
+
+  const handleChange = (idx, raw) => {
+    const only = raw.replace(/\D/g, '');
+    if (!only) {
+      const arr = digits.map((d) => (d === ' ' ? '' : d));
+      arr[idx] = '';
+      commit(arr.join(''));
+      return;
+    }
+    const chars = only.slice(0, 4 - idx).split('');
+    const arr = digits.map((d) => (d === ' ' ? '' : d));
+    chars.forEach((ch, i) => {
+      arr[idx + i] = ch;
+    });
+    commit(arr.join(''));
+    refs.current[Math.min(idx + chars.length, 3)]?.focus();
+  };
+
+  const handleKeyDown = (idx, e) => {
+    if (e.key === 'Backspace' && !digits[idx]?.trim() && idx > 0) {
+      e.preventDefault();
+      const arr = digits.map((d) => (d === ' ' ? '' : d));
+      arr[idx - 1] = '';
+      commit(arr.join(''));
+      refs.current[idx - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+    if (!pasted) return;
+    commit(pasted);
+    refs.current[Math.min(pasted.length, 3)]?.focus();
+  };
+
+  return (
+    <div className="flex items-center gap-2.5 sm:gap-3" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((idx) => {
+        const filled = Boolean(digits[idx]?.trim());
+        return (
+          <input
+            key={idx}
+            ref={(el) => {
+              refs.current[idx] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={idx === 0 ? 'one-time-code' : 'off'}
+            maxLength={1}
+            disabled={disabled}
+            value={digits[idx]?.trim() || ''}
+            onChange={(e) => handleChange(idx, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(idx, e)}
+            aria-label={`Digit kode akses ${idx + 1}`}
+            className={`w-12 h-14 sm:w-14 sm:h-16 rounded-2xl text-center text-xl sm:text-2xl font-black font-mono tabular-nums outline-none transition-all duration-200
+              ${filled
+                ? 'bg-[#5f1340] text-white border-2 border-[#5f1340] shadow-md shadow-[#5f1340]/25'
+                : 'bg-white text-[#5f1340] border-2 border-[#e8dfe4] focus:border-[#5f1340] focus:ring-4 focus:ring-[#5f1340]/12'
+              }
+              disabled:opacity-50`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 function StatusHero({ status, percent, isDelivery }) {
   const key = normalizeStatus(status);
   const theme = STATUS_THEMES[key] || STATUS_THEMES.Antrean;
@@ -299,6 +376,7 @@ export default function CustomerTrackingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [notaNumber, setNotaNumber] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [trackedOrder, setTrackedOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -320,20 +398,33 @@ export default function CustomerTrackingPage() {
   }, []);
 
   const fetchOrder = useCallback(
-    async (rawKey) => {
+    async (rawKey, rawCode) => {
       const key = extractOrderNo(rawKey);
+      const code = String(rawCode ?? '').replace(/\D/g, '').slice(0, 4);
       if (!key) {
         showToast('Input Kosong', 'Harap masukkan nomor nota terlebih dahulu.', 'error');
+        return;
+      }
+      if (code.length !== 4) {
+        showToast('Kode Akses', 'Masukkan kode akses 4 digit dari pesan WhatsApp nota digital.', 'error');
         return;
       }
 
       setIsLoading(true);
       try {
-        const res = await axios.get(`/api/tracking/${encodeURIComponent(key)}`);
+        const res = await axios.get(`/api/tracking/${encodeURIComponent(key)}`, {
+          params: { code },
+        });
         if (res.data?.success && res.data.data) {
           setTrackedOrder(res.data.data);
           setNotaNumber(res.data.data.order_no || key);
           setSearchParams({ trackingNo: res.data.data.order_no || key }, { replace: true });
+          try {
+            sessionStorage.setItem(
+              `waschen_track_${res.data.data.order_no || key}`,
+              code
+            );
+          } catch { /* ignore */ }
           showToast('Nota Ditemukan', `Berhasil memuat nota ${res.data.data.order_no}`, 'success');
         } else {
           setTrackedOrder(null);
@@ -342,7 +433,7 @@ export default function CustomerTrackingPage() {
       } catch (err) {
         setTrackedOrder(null);
         showToast(
-          'Tidak Ditemukan',
+          err.response?.status === 403 ? 'Kode Salah' : 'Tidak Ditemukan',
           err.response?.data?.message || `Nota "${key}" tidak dapat dimuat.`,
           'error'
         );
@@ -355,25 +446,32 @@ export default function CustomerTrackingPage() {
 
   useEffect(() => {
     const initial = searchParams.get('trackingNo');
-    if (initial) {
-      setNotaNumber(initial);
-      fetchOrder(initial);
-    }
+    if (!initial) return;
+    setNotaNumber(initial);
+    // Prefill nomor dari link; jangan auto-load detail tanpa kode akses
+    try {
+      const saved = sessionStorage.getItem(`waschen_track_${initial}`);
+      if (saved && /^\d{4}$/.test(saved)) {
+        setAccessCode(saved);
+        fetchOrder(initial, saved);
+      }
+    } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTrack = (e) => {
     if (e) e.preventDefault();
-    fetchOrder(notaNumber);
+    fetchOrder(notaNumber, accessCode);
   };
 
   const handleScanDetected = useCallback(
     (code) => {
       setIsScannerOpen(false);
       setNotaNumber(code);
-      fetchOrder(code);
+      // Setelah scan, user masih wajib isi kode akses
+      showToast('Nota Terbaca', 'Masukkan kode akses 4 digit, lalu klik Lacak.', 'success');
     },
-    [fetchOrder]
+    []
   );
 
   const isDelivery =
@@ -449,53 +547,102 @@ export default function CustomerTrackingPage() {
       </header>
 
       <main className="relative z-10 max-w-[1100px] w-full mx-auto px-3 sm:px-6 py-5 sm:py-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] grow flex flex-col gap-4 sm:gap-5 min-w-0">
-        {/* Search */}
-        <section className="bg-white rounded-[22px] border border-[#ebe4e8] shadow-[0_8px_30px_rgba(95,19,64,0.04)] p-4 sm:p-6 flex flex-col gap-3.5 min-w-0">
-          <div>
-            <h1 className="text-lg sm:text-xl font-extrabold text-[#5f1340] tracking-tight">
-              Di mana cucian saya?
-            </h1>
-            <p className="text-[12.5px] text-slate-500 font-medium mt-1 leading-relaxed">
-              Masukkan nomor nota, atau scan QR / barcode pada nota Anda.
-            </p>
-          </div>
+        {/* Search — form lacak nota */}
+        <section className="relative overflow-hidden rounded-[28px] border border-[#5f1340]/10 bg-white shadow-[0_20px_50px_-24px_rgba(95,19,64,0.35)] min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#5f1340] via-[#8a1c5d] to-[#c45a8a]" />
+          <div className="absolute -top-24 -right-16 w-56 h-56 rounded-full bg-[#5f1340]/[0.06] blur-3xl pointer-events-none" />
 
-          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-2.5">
-            <div className="relative grow min-w-0">
-              <input
-                type="text"
-                inputMode="text"
-                autoCapitalize="characters"
-                autoCorrect="off"
-                value={notaNumber}
-                onChange={(e) => setNotaNumber(e.target.value)}
-                placeholder="Contoh: WLCG202609150001"
-                className="w-full min-w-0 bg-[#faf7f9] border border-[#e8e0e4] focus:border-[#5f1340] focus:ring-2 focus:ring-[#5f1340]/15 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-[#2a2428] outline-none uppercase font-mono transition"
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 pointer-events-none">
-                <Search className="h-4 w-4" />
+          <div className="relative p-5 sm:p-7 flex flex-col gap-5">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5f1340] to-[#3d0c29] text-white grid place-items-center shadow-lg shadow-[#5f1340]/30 shrink-0">
+                <Search className="h-5 w-5" />
               </div>
-              <button
-                type="button"
-                onClick={() => setIsScannerOpen(true)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-[#5f1340] transition-colors cursor-pointer"
-                title="Scan QR / Barcode"
-              >
-                <Camera className="h-5 w-5" />
-              </button>
+              <div className="min-w-0 pt-0.5">
+                <h1 className="text-[1.35rem] sm:text-2xl font-extrabold text-[#2a1420] tracking-tight leading-tight">
+                  Di mana cucian saya?
+                </h1>
+                <p className="text-[13px] text-slate-500 font-medium mt-1 leading-relaxed">
+                  Pakai nomor nota dan kode akses dari WhatsApp — aman, cepat, tanpa login.
+                </p>
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full sm:w-auto py-3.5 px-7 bg-[#5f1340] hover:bg-[#4d0f33] disabled:bg-slate-400 text-white text-[13px] font-extrabold rounded-2xl shadow-md shadow-[#5f1340]/20 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-[0.98]"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'Lacak sekarang'
-              )}
-            </button>
-          </form>
+
+            <form onSubmit={handleTrack} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] font-bold text-[#5f1340]/80 px-0.5">
+                  Nomor nota
+                </label>
+                <div className="flex gap-2.5">
+                  <div className="relative grow min-w-0">
+                    <input
+                      type="text"
+                      inputMode="text"
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      value={notaNumber}
+                      onChange={(e) => setNotaNumber(e.target.value)}
+                      placeholder="WLCG202609150001"
+                      className="w-full min-w-0 bg-[#faf6f8] border border-[#eadfe5] focus:border-[#5f1340] focus:bg-white focus:ring-4 focus:ring-[#5f1340]/10 rounded-2xl py-3.5 pl-11 pr-4 text-[13px] sm:text-sm font-bold text-[#2a1420] outline-none uppercase font-mono transition"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#5f1340]/45 pointer-events-none">
+                      <Package className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsScannerOpen(true)}
+                    className="shrink-0 px-3.5 sm:px-4 rounded-2xl border border-[#eadfe5] bg-[#faf6f8] hover:bg-[#5f1340] hover:border-[#5f1340] hover:text-white text-[#5f1340] transition-all cursor-pointer flex items-center gap-2 font-bold text-xs"
+                    title="Scan QR / Barcode"
+                  >
+                    <Camera className="h-5 w-5" />
+                    <span className="hidden sm:inline">Scan</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between gap-2 px-0.5">
+                  <label className="text-[11px] font-bold text-[#5f1340]/80 inline-flex items-center gap-1.5">
+                    <Lock className="h-3.5 w-3.5" />
+                    Kode akses
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    4 digit dari WhatsApp
+                  </span>
+                </div>
+                <AccessCodeBoxes
+                  value={accessCode}
+                  onChange={setAccessCode}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || accessCode.length !== 4 || !notaNumber.trim()}
+                className="w-full py-4 px-6 bg-gradient-to-r from-[#5f1340] to-[#7a1852] hover:from-[#4d0f33] hover:to-[#5f1340] disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed text-white text-[14px] font-extrabold rounded-2xl shadow-[0_12px_28px_-8px_rgba(95,19,64,0.55)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.985]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                    Mencari nota...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4.5 h-4.5" />
+                    Lacak sekarang
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-start gap-2.5 rounded-2xl bg-[#5f1340]/[0.04] border border-[#5f1340]/10 px-3.5 py-3">
+                <ShieldCheck className="h-4 w-4 text-[#5f1340] shrink-0 mt-0.5" />
+                <p className="text-[11.5px] text-slate-600 font-medium leading-relaxed">
+                  Rincian cucian hanya terbuka jika nomor nota dan kode akses cocok. Link saja tidak cukup.
+                </p>
+              </div>
+            </form>
+          </div>
         </section>
 
         {trackedOrder ? (
@@ -729,17 +876,19 @@ export default function CustomerTrackingPage() {
             </aside>
           </div>
         ) : (
-          <section className="bg-white rounded-[22px] border border-[#ebe4e8] shadow-[0_8px_30px_rgba(95,19,64,0.04)] px-5 py-12 sm:py-14 flex flex-col items-center justify-center text-center gap-4">
-            <div className="w-[72px] h-[72px] rounded-full bg-[#5f1340]/8 border border-[#5f1340]/15 grid place-items-center">
-              <Package className="h-8 w-8 text-[#5f1340]" />
+          <section className="relative overflow-hidden rounded-[28px] border border-dashed border-[#5f1340]/20 bg-gradient-to-b from-white to-[#faf6f8] px-5 py-12 sm:py-16 flex flex-col items-center justify-center text-center gap-5">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-[#5f1340]/10 blur-xl scale-150" />
+              <div className="relative w-[76px] h-[76px] rounded-[22px] bg-gradient-to-br from-[#5f1340] to-[#3d0c29] grid place-items-center shadow-xl shadow-[#5f1340]/25">
+                <Package className="h-8 w-8 text-white" />
+              </div>
             </div>
             <div className="flex flex-col gap-1.5 max-w-sm">
-              <h3 className="text-[15px] font-extrabold text-[#5f1340]">
-                Belum ada nota yang dilacak
+              <h3 className="text-[16px] font-extrabold text-[#2a1420]">
+                Siap melacak cucian Anda
               </h3>
-              <p className="text-[12.5px] text-slate-500 leading-relaxed font-medium">
-                Ketik nomor nota Anda di atas, atau gunakan kamera untuk scan QR / barcode pada
-                nota.
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
+                Isi nomor nota dan 4 digit kode akses di atas, atau scan QR pada nota lalu masukkan kodenya.
               </p>
             </div>
           </section>

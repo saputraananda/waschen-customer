@@ -6,7 +6,8 @@ const SCANNER_ELEMENT_ID = 'waschen-customer-scanner';
 
 /**
  * Ambil nomor nota dari hasil scan.
- * QR nota POS berisi URL: `{origin}/dashboard?trackingNo=WLCG202608310001`
+ * QR nota POS berisi URL: `{CUSTOMER_APP}/tracking?trackingNo=WLCG...`
+ * (kode akses 4 digit tidak ikut di URL — diisi manual dari WhatsApp)
  */
 export function extractOrderNo(raw) {
     const text = String(raw || '').trim();
