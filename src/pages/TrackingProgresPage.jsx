@@ -31,6 +31,7 @@ import {
   normalizeStatus,
   statusPercent,
 } from '../utils/trackingStatus.js';
+import { formatWibDateTime } from '../utils/wib.js';
 
 const STATUS_ICONS = {
   Antrean: Package,
@@ -101,18 +102,7 @@ const STATUS_THEMES = {
   },
 };
 
-const formatDateTime = (value) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+const formatDateTime = (value) => formatWibDateTime(value) || '—';
 
 const formatQty = (qty, unit) => {
   const n = Number(qty);
