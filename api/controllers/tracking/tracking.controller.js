@@ -47,7 +47,7 @@ const loadTrackingPayload = async (trx) => {
   const [items] = await myWaschenPool.query(
     `SELECT id, service_name, qty, unit, item_work_status, item_completed_at, fulfillment_type
      FROM tr_transaction_detail
-     WHERE transaction_id = ?
+     WHERE transaction_id = ? AND is_production = 1
      ORDER BY id ASC`,
     [trx.id]
   );
